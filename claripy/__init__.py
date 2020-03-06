@@ -42,6 +42,7 @@ from .ast.bv import *
 from .ast.fp import *
 from .ast.bool import *
 from .ast.strings import *
+from .ast.array import *
 from . import ast
 del BV
 del Bool

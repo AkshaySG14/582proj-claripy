@@ -123,7 +123,7 @@ class BackendZ3(Backend):
         # and the operations
         all_ops = backend_fp_operations | backend_operations if supports_fp else backend_operations
         all_ops |= backend_strings_operations - {'StrIsDigit'} 
-        for o in all_ops - {'BVV', 'BoolV', 'FPV', 'FPS', 'BitVec', 'StringV'}:
+        for o in all_ops - {'BVV', 'BoolV', 'FPV', 'FPS', 'BitVec', 'StringV', 'Array'}:
             self._op_raw[o] = getattr(self, '_op_raw_' + o)
         self._op_raw['Xor'] = self._op_raw_Xor
 
@@ -145,6 +145,7 @@ class BackendZ3(Backend):
         self._op_expr['BoolS'] = self.BoolS
         self._op_expr['StringV'] = self.StringV
         self._op_expr['StringS'] = self.StringS
+        self._op_expr['Array'] = self.Array
 
         self._op_raw['__floordiv__'] = self._op_div
         self._op_raw['__mod__'] = self._op_mod
@@ -351,6 +352,13 @@ class BackendZ3(Backend):
     @condom
     def StringS(self, ast):
         return z3.String(ast.args[0], ctx=self._context)
+
+    @condom
+    def Array(self, ast):
+        # TODO: Turn this into a variable type sort (not very important)
+        return z3.Array(ast.args[0], z3.BitVecSort(32, self._context), z3.BitVecSort(32, self._context))
+        # return z3.Array(ast.args[0], ast.args[1], ast.args[2])
+
     #
     # Conversions
     #
@@ -1373,6 +1381,22 @@ class BackendZ3(Backend):
     @condom
     def _op_raw_UnitStr(input_bvv):
         return z3.Unit(input_bvv)
+
+    # Array operations:
+
+    @staticmethod
+    @condom
+    def _op_raw_ArrIndex(index, arr):
+        print("Wew")
+        return z3.Select(arr, index)
+
+    @staticmethod
+    @condom
+    def _op_raw_ArrStore(arr, index, val):
+        print("Blew")
+        return z3.Store(arr, index, val)
+
+
 #
 # this is for the actual->abstract conversion above
 #
@@ -1418,8 +1442,8 @@ op_map = {
     'Z3_OP_POWER': '__pow__',
 
     # Arrays & Sets
-    #'Z3_OP_STORE': None,
-    #'Z3_OP_SELECT': None,
+    'Z3_OP_STORE': 'ArrStore',
+    'Z3_OP_SELECT': 'ArrIndex',
     #'Z3_OP_CONST_ARRAY': None,
     #'Z3_OP_ARRAY_MAP': None,
     #'Z3_OP_ARRAY_DEFAULT': None,
@@ -1533,6 +1557,7 @@ from ..ast.bv import BV, BVV
 from ..ast.bool import BoolV, Bool
 from ..ast.fp import FP, FPV
 from ..ast.strings import StringV, StringS
+from ..ast.array import Array
 from ..operations import backend_operations, backend_fp_operations, backend_strings_operations
 from ..fp import FSort, RM, RM_NearestTiesEven, RM_NearestTiesAwayFromZero, RM_TowardsPositiveInf, RM_TowardsNegativeInf, RM_TowardsZero
 from ..errors import ClaripyError, BackendError, ClaripyOperationError
@@ -1574,8 +1599,8 @@ op_type_map = {
     'Z3_OP_POWER': None,
 
     # Arrays & Sets
-    #'Z3_OP_STORE': None,
-    #'Z3_OP_SELECT': None,
+    'Z3_OP_STORE': Array,
+    'Z3_OP_SELECT': BV,
     #'Z3_OP_CONST_ARRAY': None,
     #'Z3_OP_ARRAY_MAP': None,
     #'Z3_OP_ARRAY_DEFAULT': None,

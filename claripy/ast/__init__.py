@@ -9,10 +9,11 @@ Base = lambda *args, **kwargs: None
 true = lambda *args, **kwargs: None
 false = lambda *args, **kwargs: None
 String = lambda *args, **kwargs: None
+Array = lambda *args, **kwargs: None
 all_operations = None
 
 def _import():
-    global Bits, BV, VS, FP, Bool, Int, Base, String, true, false, all_operations
+    global Bits, BV, VS, FP, Bool, Int, Base, String, Array, true, false, all_operations
 
     from .bits import Bits
     from .bv import BV
@@ -22,4 +23,5 @@ def _import():
     from .int import Int
     from .base import Base
     from .strings import String
+    from .array import Array
     from .. import ops as all_operations

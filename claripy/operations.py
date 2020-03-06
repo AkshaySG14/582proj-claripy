@@ -206,6 +206,9 @@ def strindexof_bv_size_calc(s1, s2, start_idx, bitlength): # pylint: disable=unu
 def strtoint_bv_size_calc(s, bitlength): # pylint: disable=unused-argument
     return bitlength
 
+def arrindex_length_calc(index, a): # pylint: disable=unused-argument
+    return index.length
+
 #
 # Operation lists
 #
@@ -285,12 +288,16 @@ backend_bitmod_operations = {
     'Concat', 'Extract', 'SignExt', 'ZeroExt'
 }
 
+backend_array_operations = {
+    'ArrIndex', 'ArrStore'
+}
+
 backend_creation_operations = {
     'BoolV', 'BVV', 'FPV', 'StringV'
 }
 
 backend_symbol_creation_operations = {
-    'BoolS', 'BVS', 'FPS', 'StringS'
+    'BoolS', 'BVS', 'FPS', 'StringS', 'Array'
 }
 
 backend_vsa_creation_operations = {
@@ -302,7 +309,7 @@ backend_other_operations = { 'If' }
 backend_arithmetic_operations = {'SDiv', 'SMod'}
 
 backend_operations = backend_comparator_operations | backend_bitwise_operations | backend_boolean_operations | \
-                     backend_bitmod_operations | backend_creation_operations | backend_other_operations | backend_arithmetic_operations
+                     backend_bitmod_operations | backend_creation_operations | backend_other_operations | backend_arithmetic_operations | backend_array_operations
 backend_operations_vsa_compliant = backend_bitwise_operations | backend_comparator_operations | backend_boolean_operations | backend_bitmod_operations
 backend_operations_all = backend_operations | backend_operations_vsa_compliant | backend_vsa_creation_operations
 
