@@ -1387,13 +1387,11 @@ class BackendZ3(Backend):
     @staticmethod
     @condom
     def _op_raw_ArrIndex(index, arr):
-        print("Wew")
         return z3.Select(arr, index)
 
     @staticmethod
     @condom
     def _op_raw_ArrStore(arr, index, val):
-        print("Blew")
         return z3.Store(arr, index, val)
 
 
