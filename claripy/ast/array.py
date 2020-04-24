@@ -1,6 +1,7 @@
 from ..ast.base import Base, _make_name, ASTCacheKey
 
 from .. import operations
+from ..backend_manager import backends
 from .bv import BV
 
 
@@ -17,6 +18,7 @@ class Array(Base):
         else:
             raise ValueError("Only bitvectors are allowed for array indexing")
 
+
 def ArrayS(name, dom, rng):
     if type(name) is bytes:
         name = name.decode()
@@ -25,8 +27,11 @@ def ArrayS(name, dom, rng):
 
     name = _make_name(name, -1)
 
-    return Array('Array', (name, dom, rng), variables={name}, symbolic=True)
+    return Array('Array', (name, dom, rng), variables={name}, symbolic=True, errored=set([backends._backends_by_name['concrete']]))
 
+
+def ArrayV(dom, val):
+    return Array('ConstantArray', (dom, val), symbolic = True, errored=set([backends._backends_by_name['concrete']]))
 
 
 ArrayIndex = operations.op('ArrIndex', (BV, Array), BV, calc_length=operations.arrindex_length_calc)

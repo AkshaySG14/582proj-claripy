@@ -56,7 +56,10 @@ class ModelCache:
         # If there was no last value, it was not constrained, so we can use
         # anything.
         new_ast = ast.replace_dict(self.replacements, leaf_operation=self._leaf_op)
-        return backends.concrete.eval(new_ast, 1)[0]
+        if backends.concrete in new_ast._errored:
+            return super(ModelCache, self).eval(ast)
+        else:
+            return backends.concrete.eval(new_ast, 1)[0]
 
     def eval_constraints(self, constraints):
         """Returns whether the constraints is satisfied trivially by using the
@@ -213,7 +216,6 @@ class ModelCacheMixin:
 
     def _get_batch_solutions(self, asts, n=None, extra_constraints=()):
         results = set()
-
         for m in self._get_models(extra_constraints):
             try:
                 results.add(m.eval_list(asts))
@@ -241,7 +243,13 @@ class ModelCacheMixin:
         return super(ModelCacheMixin, self).satisfiable(extra_constraints=extra_constraints, **kwargs)
 
     def batch_eval(self, asts, n, extra_constraints=(), **kwargs):
-        results = self._get_batch_solutions(asts, n=n, extra_constraints=extra_constraints)
+        results = set()
+        is_concretizable = True
+        for ast in asts:
+            if backends.concrete in ast._errored:
+                is_concretizable = False
+        if is_concretizable:
+            results = self._get_batch_solutions(asts, n=n, extra_constraints=extra_constraints)
 
         if len(results) == n or (len(asts) == 1 and asts[0].cache_key in self._eval_exhausted):
             return results

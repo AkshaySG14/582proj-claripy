@@ -98,7 +98,6 @@ class ConstrainedFrontend(Frontend):  # pylint:disable=abstract-method
     #
 
     def add(self, constraints):
-        print(constraints)
         self.constraints += constraints
         for c in constraints:
             self.variables.update(c.variables)

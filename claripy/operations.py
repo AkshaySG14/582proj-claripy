@@ -293,7 +293,7 @@ backend_array_operations = {
 }
 
 backend_creation_operations = {
-    'BoolV', 'BVV', 'FPV', 'StringV'
+    'BoolV', 'BVV', 'FPV', 'StringV', 'ConstantArray'
 }
 
 backend_symbol_creation_operations = {
