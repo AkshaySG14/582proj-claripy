@@ -31,7 +31,7 @@ def ArrayS(name, dom, rng):
 
 
 def ArrayV(dom, val):
-    return Array('ConstantArray', (dom, val), symbolic = True, errored=set([backends._backends_by_name['concrete']]))
+    return Array('ConstantArray', (dom, val), symbolic=True, errored=set([backends._backends_by_name['concrete']]))
 
 
 ArrayIndex = operations.op('ArrIndex', (BV, Array), BV, calc_length=operations.arrindex_length_calc)

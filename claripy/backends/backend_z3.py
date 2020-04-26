@@ -8,6 +8,7 @@ import operator
 import threading
 import weakref
 from functools import reduce
+from collections import deque
 from decimal import Decimal
 
 from cachetools import LRUCache
@@ -356,13 +357,11 @@ class BackendZ3(Backend):
 
     @condom
     def ArrayS(self, ast):
-        # TODO: Turn this into a variable type sort (not very important)
-        return z3.Array(ast.args[0], z3.BitVecSort(64, self._context), z3.BitVecSort(64, self._context))
-        # return z3.Array(ast.args[0], ast.args[1], ast.args[2])
+        return z3.Array(ast.args[0], z3.BitVecSort(ast.args[1], self._context), z3.BitVecSort(ast.args[2], self._context))
 
     @condom
     def ArrayV(self, ast):
-        return z3.K(z3.BitVecSort(64, self._context), self.BVV(ast.args[1]))
+        return z3.K(z3.BitVecSort(ast.args[0], self._context), self.BVV(ast.args[1]))
 
     #
     # Conversions
@@ -416,28 +415,47 @@ class BackendZ3(Backend):
 
         return ast.value
 
+    # TODO: Due to Python's idiosyncracies, below is a very hacky fix to using the deque to ensure no stack overflow. Should be fixed eventually.
     def _abstract_internal(self, ctx, ast, split_on=None):
-        h = self._z3_ast_hash(ast)
-        try:
-            cached_ast, _ = self._ast_cache[h]
-            return cached_ast
-        except KeyError:
-            pass
+        ast = [ast, []]
+        stack = deque()
+        stack.append(ast)
+        while stack:
+            new_ast = stack.pop()
+            h = self._z3_ast_hash(new_ast[0])
+            try:
+                cached_ast, _ = self._ast_cache[h]
+                new_ast[0] = cached_ast
+                continue
+            except KeyError:
+                pass
 
-        decl = z3.Z3_get_app_decl(ctx, ast)
-        decl_num = z3.Z3_get_decl_kind(ctx, decl)
-        z3_sort = z3.Z3_get_sort(ctx, ast)
+            decl = z3.Z3_get_app_decl(ctx, new_ast[0])
+            decl_num = z3.Z3_get_decl_kind(ctx, decl)
 
-        if decl_num not in z3_op_nums:
-            raise ClaripyError("unknown decl kind %d" % decl_num)
-        if z3_op_nums[decl_num] not in op_map:
-            raise ClaripyError("unknown decl op %s" % z3_op_nums[decl_num])
-        op_name = op_map[z3_op_nums[decl_num]]
+            if decl_num not in z3_op_nums:
+                raise ClaripyError("unknown decl kind %d" % decl_num)
+            if z3_op_nums[decl_num] not in op_map:
+                raise ClaripyError("unknown decl op %s" % z3_op_nums[decl_num])
+            op_name = op_map[z3_op_nums[decl_num]]
 
+            num_args = z3.Z3_get_app_num_args(ctx, new_ast[0])
+            children = []
+            if num_args > 0 and len(new_ast[1]) == 0:
+                stack.append(new_ast)
+                for i in range(0, num_args):
+                    next_ast = [z3.Z3_get_app_arg(ctx, new_ast[0], i), []]
+                    children.append(next_ast)
+                    stack.append(next_ast)
+                new_ast[1] = children
+            else:
+                new_ast[1] = [child[0] for child in new_ast[1]]
+                new_ast[0] = self._get_internal_abstraction(op_name, ctx, new_ast[0], new_ast[1], h, decl, decl_num)
+        return ast[0]
+
+    def _get_internal_abstraction(self, op_name, ctx, ast, children, h, decl, decl_num):
         num_args = z3.Z3_get_app_num_args(ctx, ast)
-        split_on = self._split_on if split_on is None else split_on
-        new_split_on = split_on if op_name in split_on else set()
-        children = [ self._abstract_internal(ctx, z3.Z3_get_app_arg(ctx, ast, i), new_split_on) for i in range(num_args) ]
+        z3_sort = z3.Z3_get_sort(ctx, ast)
 
         append_children = True
 

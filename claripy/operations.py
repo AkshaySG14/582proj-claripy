@@ -207,7 +207,8 @@ def strtoint_bv_size_calc(s, bitlength): # pylint: disable=unused-argument
     return bitlength
 
 def arrindex_length_calc(index, a): # pylint: disable=unused-argument
-    return index.length
+    # TODO: Add operation code to make this variable.
+    return 8
 
 #
 # Operation lists
