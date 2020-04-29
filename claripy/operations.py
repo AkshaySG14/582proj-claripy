@@ -294,7 +294,7 @@ backend_array_operations = {
 }
 
 backend_creation_operations = {
-    'BoolV', 'BVV', 'FPV', 'StringV', 'ConstantArray'
+    'BoolV', 'BVV', 'FPV', 'StringV', 'ConstArray'
 }
 
 backend_symbol_creation_operations = {
@@ -393,7 +393,7 @@ inverse_operations = {
 length_same_operations = expression_arithmetic_operations | backend_bitwise_operations | expression_bitwise_operations | backend_other_operations | expression_set_operations | {'Reversed'}
 length_none_operations = backend_comparator_operations | expression_comparator_operations | backend_boolean_operations | backend_fp_cmp_operations
 length_change_operations = backend_bitmod_operations
-length_new_operations = backend_creation_operations
+length_new_operations = backend_creation_operations | backend_array_operations
 
 leaf_operations = backend_symbol_creation_operations | backend_creation_operations | backend_vsa_creation_operations
 leaf_operations_concrete = backend_creation_operations

@@ -415,7 +415,8 @@ class BackendZ3(Backend):
 
         return ast.value
 
-    # TODO: Due to Python's idiosyncracies, below is a very hacky fix to using the deque to ensure no stack overflow. Should be fixed eventually.
+    # TODO: Due to Python's idiosyncracies w.r.t references, below is a very hacky fix to using the deque to ensure
+    #  no stack overflow due the tree nature of Z3 arrays (previous method was recursion). Should be fixed.
     def _abstract_internal(self, ctx, ast, split_on=None):
         ast = [ast, []]
         stack = deque()
@@ -472,6 +473,8 @@ class BackendZ3(Backend):
             else:
                 bv_num = int(z3.Z3_get_numeral_string(ctx, ast))
                 return BVV(bv_num, bv_size)
+        elif op_name == 'ArrIndex':
+            return self.BVS(ast)
         elif op_name in ('FPVal', 'MinusZero', 'MinusInf', 'PlusZero', 'PlusInf', 'NaN'):
             ebits = z3.Z3_fpa_get_ebits(ctx, z3_sort)
             sbits = z3.Z3_fpa_get_sbits(ctx, z3_sort)
@@ -489,7 +492,7 @@ class BackendZ3(Backend):
                 (ast_args, annots) = self.extra_bvs_data.get(symbol_name, (None, None))
                 if ast_args is None:
                     ast_args = (symbol_str, None, None, None, False, False, None)
-
+                print("I mean it")
                 return BV('BVS',
                         ast_args,
                         length=bv_size,
@@ -633,6 +636,7 @@ class BackendZ3(Backend):
             except AssertionError:
                 raise BackendError("Weird z3 model")
         else:
+            print(op_name)
             raise BackendError("Unable to abstract Z3 object to primitive")
 
     def _abstract_bv_val(self, ctx, ast):
@@ -1416,6 +1420,11 @@ class BackendZ3(Backend):
     def _op_raw_ArrStore(arr, index, val):
         return z3.Store(arr, index, val)
 
+    @staticmethod
+    @condom
+    def _op_raw_ConstArray(dom, val):
+        return z3.K(dom, val)
+
 #
 # this is for the actual->abstract conversion above
 #
@@ -1463,6 +1472,7 @@ op_map = {
     # Arrays & Sets
     'Z3_OP_STORE': 'ArrStore',
     'Z3_OP_SELECT': 'ArrIndex',
+    'Z3_OP_CONST_ARRAY': 'ConstArray',
     #'Z3_OP_ARRAY_MAP': None,
     #'Z3_OP_ARRAY_DEFAULT': None,
     #'Z3_OP_SET_UNION': None,
