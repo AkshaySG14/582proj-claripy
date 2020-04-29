@@ -492,7 +492,6 @@ class BackendZ3(Backend):
                 (ast_args, annots) = self.extra_bvs_data.get(symbol_name, (None, None))
                 if ast_args is None:
                     ast_args = (symbol_str, None, None, None, False, False, None)
-                print("I mean it")
                 return BV('BVS',
                         ast_args,
                         length=bv_size,
